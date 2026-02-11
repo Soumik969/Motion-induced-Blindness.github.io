@@ -22,6 +22,13 @@
             border-radius: 1.5rem;
         }
 
+        /* Modal Styles */
+        #login-modal {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 100;
+        }
+
         canvas {
             border-radius: 1rem;
             box-shadow: 0 0 60px rgba(59, 130, 246, 0.25);
@@ -77,9 +84,22 @@
         }
     </style>
 </head>
-<body>
+<body class="overflow-hidden"> <div id="login-modal" class="fixed inset-0 flex items-center justify-center p-4">
+        <div class="glass-panel p-10 max-w-md w-full text-center border border-blue-500/30 shadow-2xl shadow-blue-500/20">
+            <h1 class="text-3xl font-bold mb-2 text-white">Welcome Researcher</h1>
+            <p class="text-slate-400 mb-8">Please enter your name to begin the MIB Analysis session.</p>
+            
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <input type="text" id="participantNameInput" required placeholder="Enter your name..." 
+                    class="w-full bg-slate-800 border border-slate-600 rounded-lg p-4 text-center text-lg text-white placeholder-slate-500 focus:ring-2 ring-blue-500 outline-none transition-all">
+                
+                <button type="submit" class="w-full btn-primary py-4 rounded-lg font-bold text-lg shadow-lg text-white">
+                    Enter Laboratory
+                </button>
+            </form>
+        </div>
+    </div>
 
-    <!-- Section 1: Introduction -->
     <section class="scroll-section" id="welcome">
         <div class="max-w-3xl text-center">
             <h1 class="text-6xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-300">
@@ -95,11 +115,9 @@
         </div>
     </section>
 
-    <!-- Section 2: Interactive Simulator -->
     <section class="scroll-section" id="simulator">
         <div class="w-full max-w-7xl flex flex-col lg:flex-row gap-8 items-start">
             
-            <!-- Left: Controls -->
             <div class="glass-panel p-8 w-full lg:w-1/3 space-y-6">
                 
                 <div>
@@ -176,7 +194,6 @@
                 </div>
             </div>
 
-            <!-- Right: Canvas -->
             <div class="relative w-full lg:w-2/3 flex flex-col items-center">
                 <canvas id="mibCanvas" width="600" height="600" class="bg-black"></canvas>
                 
@@ -198,15 +215,17 @@
         </div>
     </section>
 
-    <!-- Section 3: Data Submission Form -->
     <section class="scroll-section" id="survey">
         <div class="glass-panel p-10 w-full max-w-3xl">
             <h2 class="text-3xl font-bold mb-6 text-white">Laboratory Data Sheet</h2>
-            <form id="mibForm" class="space-y-6">
+            
+            <div id="submissionMessage" class="hidden mb-4 p-4 rounded-lg bg-green-500/20 text-green-300 border border-green-500/50"></div>
+
+            <form id="mibForm" onsubmit="submitToGoogleSheet(event)" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-sm font-semibold mb-2">Participant ID</label>
-                        <input type="text" placeholder="Sub-01" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 outline-none focus:ring-2 ring-blue-500 text-white">
+                        <label class="block text-sm font-semibold mb-2">Participant Name</label>
+                        <input type="text" id="displayParticipantName" readonly class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 outline-none text-slate-400 cursor-not-allowed">
                     </div>
                     <div>
                         <label class="block text-sm font-semibold mb-2">Current Variable Set</label>
@@ -221,14 +240,33 @@
                     </div>
                 </div>
 
-                <button type="submit" class="w-full btn-primary py-4 rounded-lg font-bold text-lg shadow-xl text-white">
-                    Export to Research Database
+                <button type="submit" id="submitBtn" class="w-full btn-primary py-4 rounded-lg font-bold text-lg shadow-xl text-white flex items-center justify-center gap-2">
+                    <span>Export to Google Sheet</span>
                 </button>
             </form>
         </div>
     </section>
 
     <script>
+        // --- CONFIGURATION ---
+        // Your Verified Script URL
+        const scriptURL = "https://script.google.com/macros/s/AKfycbzRIO9EG4BJLe7hPGdeqYMdXqw17G5HrYw9lHurAApNnuSUOeVDZ4qMT_hDCWb1PO4X/exec"; 
+        
+        let participantName = "";
+
+        // --- LOGIN LOGIC ---
+        function handleLogin(e) {
+            e.preventDefault();
+            const input = document.getElementById('participantNameInput');
+            if (input.value.trim() !== "") {
+                participantName = input.value;
+                document.getElementById('displayParticipantName').value = participantName;
+                document.getElementById('login-modal').style.display = 'none';
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+
+        // --- CANVAS LOGIC ---
         const canvas = document.getElementById('mibCanvas');
         const ctx = canvas.getContext('2d', { alpha: false });
         const recordBtn = document.getElementById('recordToggle');
@@ -409,6 +447,62 @@
                     </div>
                 `).join('');
             }
+        }
+
+        // --- SUBMIT TO GOOGLE SHEET ---
+        function submitToGoogleSheet(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const msg = document.getElementById('submissionMessage');
+            
+            // Gather data
+            const freq = events.length;
+            const total = events.reduce((a, b) => a + b, 0);
+            const avg = freq > 0 ? (total / freq) : 0;
+            const variableSet = document.getElementById('variableDisplay').value;
+
+            if (freq === 0) {
+                alert("No data recorded yet! Please run the experiment first.");
+                return;
+            }
+
+            btn.innerText = "Sending...";
+            btn.disabled = true;
+
+            const payload = {
+                name: participantName,
+                variable: variableSet,
+                avg: avg.toFixed(2),
+                events: freq
+            };
+
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors', // Important for Google Sheets
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                msg.innerText = "Data successfully saved to Laboratory Database.";
+                msg.classList.remove('hidden');
+                btn.innerText = "Export Success";
+                btn.classList.replace('btn-primary', 'bg-green-600');
+                
+                // Optional: clear data for next round
+                setTimeout(() => {
+                   msg.classList.add('hidden');
+                   btn.disabled = false;
+                   btn.innerText = "Export to Google Sheet";
+                   btn.classList.replace('bg-green-600', 'btn-primary');
+                }, 3000);
+            })
+            .catch(error => {
+                console.error('Error!', error.message);
+                btn.innerText = "Error (Try Again)";
+                btn.disabled = false;
+            });
         }
 
         window.onload = () => {
