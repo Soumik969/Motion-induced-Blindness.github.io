@@ -163,7 +163,6 @@
                 <div class="lg:col-span-8 flex flex-col items-center">
                     <div class="relative">
                         <canvas id="stageCanvas" width="640" height="640"></canvas>
-                        
                         <div id="canvasOverlay" class="absolute inset-0 bg-slate-900/95 backdrop-blur-md flex flex-col items-center justify-center rounded-2xl text-center p-8 transition-all">
                             <div id="prepContainer" class="scale-100 transition-transform">
                                 <p class="text-blue-400 font-bold uppercase tracking-widest mb-2">Get Ready</p>
@@ -171,7 +170,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <button id="spaceBtn" class="w-full mt-6 bg-slate-800 border-2 border-slate-700 py-8 rounded-3xl font-black text-2xl uppercase tracking-[0.4em] transition-all shadow-2xl select-none touch-none">
                         Hold For Disappearance
                     </button>
@@ -211,7 +209,7 @@
 
     <script>
         // --- CONFIGURATION ---
-        const scriptURL = "https://script.google.com/macros/s/AKfycbzRIO9EG4BJLe7hPGdeqYMdXqw17G5HrYw9lHurAApNnuSUOeVDZ4qMT_hDCWb1PO4X/exec"; 
+        const scriptURL = "https://script.google.com/macros/s/AKfycbz2S2QEDJlJJUzqkY2F5yLPJeSpVfRrQ0WbgVcNW0saSIwazORmKtAgXx1o37MIBsnH/exec";
         
         const canvas = document.getElementById('stageCanvas');
         const ctx = canvas.getContext('2d', { alpha: false });
@@ -221,7 +219,7 @@
         const canvasOverlay = document.getElementById('canvasOverlay');
         const intervalDisp = document.getElementById('intervalDisplay');
         
-        const TRIAL_TIME = 10000; // 10 Seconds per trial
+        const TRIAL_TIME = 10000;
 
         const PRESETS_RAW = [
             { name: "Yellow Standard", maskColor: '#3b82f6', targetColor: '#fbbf24', vibration: false, contrast: 1.0 },
@@ -230,7 +228,6 @@
             { name: "Yellow Low Contrast", maskColor: '#3b82f6', targetColor: '#fbbf24', vibration: false, contrast: 0.25 }
         ];
 
-        // Generate 8 stages (4 presets * 2 quantities)
         const STAGES = [];
         PRESETS_RAW.forEach(p => STAGES.push({...p, targetCount: 3}));
         PRESETS_RAW.forEach(p => STAGES.push({...p, targetCount: 2}));
@@ -241,13 +238,13 @@
         let isBlind = false;
         let angle = 0;
         let bgDots = [];
-        let sessionData = []; // Stores all trial data
+        let sessionData = []; 
         let trialTimerRef = null;
         let prepTimerRef = null;
         
         let trialStartTime = 0;
         let blindStartTime = 0;
-        let currentEvents = []; // Stores events for just the current trial
+        let currentEvents = []; 
 
         function startProtocol() {
             const nameInput = document.getElementById('participantID');
@@ -256,11 +253,9 @@
                 return;
             }
             participantName = nameInput.value;
-
             document.getElementById('onboarding').classList.add('hidden');
             document.getElementById('experimentArea').classList.remove('hidden');
             document.getElementById('navOverlay').classList.remove('hidden');
-            
             initBgDots();
             requestAnimationFrame(draw);
             initiateTrialSequence();
@@ -275,13 +270,11 @@
         function restartCurrentTrial() {
             if(trialTimerRef) clearInterval(trialTimerRef);
             if(prepTimerRef) clearInterval(prepTimerRef);
-            
             trialActive = false;
             isBlind = false;
             spaceBtn.classList.remove('spacebar-active');
             currentEvents = [];
             intervalDisp.innerHTML = "";
-            
             initiateTrialSequence();
         }
 
@@ -290,17 +283,11 @@
             document.getElementById('conditionLabel').innerText = `Trial ${currentStageIdx + 1} of 8`;
             document.getElementById('conditionName').innerText = stage.name;
             document.getElementById('targetLabel').innerText = `${stage.targetCount} TARGETS`;
-            document.getElementById('liveFreq').innerText = '0';
-            document.getElementById('liveTime').innerText = '0.00s';
-            document.getElementById('statusIndicator').innerText = "Standby...";
-            intervalDisp.innerHTML = "";
-            
             document.querySelectorAll('.progress-dot').forEach((dot, idx) => {
                 dot.classList.toggle('active', idx === currentStageIdx);
                 dot.classList.toggle('complete', idx < currentStageIdx);
             });
-            
-            countdownDisp.innerText = (TRIAL_TIME / 1000).toFixed(1);
+            countdownDisp.innerText = "10.0";
             canvasOverlay.style.opacity = '1';
             canvasOverlay.style.pointerEvents = 'all';
         }
@@ -309,12 +296,10 @@
             return new Promise(resolve => {
                 let timeLeft = 3;
                 prepCountdownDisp.innerText = timeLeft;
-                
                 prepTimerRef = setInterval(() => {
                     timeLeft--;
-                    if (timeLeft > 0) {
-                        prepCountdownDisp.innerText = timeLeft;
-                    } else {
+                    if (timeLeft > 0) prepCountdownDisp.innerText = timeLeft;
+                    else {
                         clearInterval(prepTimerRef);
                         canvasOverlay.style.opacity = '0';
                         canvasOverlay.style.pointerEvents = 'none';
@@ -328,13 +313,10 @@
             trialActive = true;
             trialStartTime = Date.now();
             currentEvents = [];
-            document.getElementById('statusIndicator').innerText = "Recording...";
-            
             trialTimerRef = setInterval(() => {
                 const elapsed = Date.now() - trialStartTime;
                 const remaining = Math.max(0, (TRIAL_TIME - elapsed) / 1000);
                 countdownDisp.innerText = remaining.toFixed(1);
-
                 if(elapsed >= TRIAL_TIME) {
                     clearInterval(trialTimerRef);
                     completeStage();
@@ -345,17 +327,13 @@
         function completeStage() {
             trialActive = false;
             if(isBlind) stopBlindness();
-            
             const stage = STAGES[currentStageIdx];
-            
-            // Push data with all recorded intervals
             sessionData.push({
                 presetName: stage.name,
                 targetCount: stage.targetCount,
                 color: stage.targetColor === '#fbbf24' ? 'Yellow' : 'Orange',
                 events: [...currentEvents]
             });
-
             if(currentStageIdx < 7) {
                 currentStageIdx++;
                 initiateTrialSequence();
@@ -373,41 +351,24 @@
 
         function stopBlindness() {
             if(!isBlind) return;
-            const now = Date.now();
-            const duration = (now - blindStartTime) / 1000;
-            
+            const duration = (Date.now() - blindStartTime) / 1000;
             if(duration > 0.05) {
-                const eventObj = {
-                    startAt: (blindStartTime - trialStartTime) / 1000,
-                    duration: duration,
-                    endAt: (now - trialStartTime) / 1000
-                };
-                currentEvents.push(eventObj);
-                
-                // Add to live interval log
+                currentEvents.push({ duration: duration });
                 const span = document.createElement('div');
                 span.innerText = `Event ${currentEvents.length}: ${duration.toFixed(3)}s`;
                 intervalDisp.prepend(span);
             }
-            
             isBlind = false;
             spaceBtn.classList.remove('spacebar-active');
-            updateLiveStats();
-        }
-
-        function updateLiveStats() {
             const total = currentEvents.reduce((acc, ev) => acc + ev.duration, 0);
             document.getElementById('liveFreq').innerText = currentEvents.length;
             document.getElementById('liveTime').innerText = total.toFixed(2) + 's';
         }
 
-        // Input Listeners
         window.addEventListener('keydown', (e) => { if(e.code === 'Space') { e.preventDefault(); startBlindness(); }});
         window.addEventListener('keyup', (e) => { if(e.code === 'Space') { e.preventDefault(); stopBlindness(); }});
         spaceBtn.addEventListener('mousedown', (e) => { e.preventDefault(); startBlindness(); });
-        spaceBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startBlindness(); });
         window.addEventListener('mouseup', stopBlindness);
-        window.addEventListener('touchend', stopBlindness);
 
         function initBgDots() {
             bgDots = [];
@@ -424,7 +385,6 @@
             const cx = canvas.width / 2;
             const cy = canvas.height / 2;
             const stage = STAGES[currentStageIdx] || STAGES[7];
-
             ctx.save();
             ctx.translate(cx, cy);
             ctx.rotate(angle);
@@ -437,7 +397,6 @@
             });
             ctx.restore();
             ctx.globalAlpha = 1.0;
-
             ctx.fillStyle = stage.targetColor;
             const targetAngles = stage.targetCount === 3 ? [30, 150, 270] : [0, 180];
             targetAngles.forEach(deg => {
@@ -451,14 +410,12 @@
                 ctx.arc(cx + Math.cos(r) * 140 + jX, cy + Math.sin(r) * 140 + jY, 7, 0, Math.PI * 2);
                 ctx.fill();
             });
-
             ctx.strokeStyle = '#4ade80';
             ctx.lineWidth = 4;
             ctx.beginPath();
             ctx.moveTo(cx-15, cy); ctx.lineTo(cx+15, cy);
             ctx.moveTo(cx, cy-15); ctx.lineTo(cx, cy+15);
             ctx.stroke();
-
             angle += 0.025;
             requestAnimationFrame(draw);
         }
@@ -467,41 +424,34 @@
             document.getElementById('experimentArea').classList.add('hidden');
             document.getElementById('navOverlay').classList.add('hidden');
             document.getElementById('results').classList.remove('hidden');
-
             const log = document.getElementById('finalLog');
             log.innerHTML = sessionData.map(data => {
                 const total = data.events.reduce((a,b) => a + b.duration, 0);
-                // Calculate Average for display
                 const avg = data.events.length > 0 ? (total / data.events.length) : 0;
-                
                 return `
                     <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                        <div class="flex justify-between items-center mb-2">
+                        <div class="flex justify-between items-center">
                             <div>
                                 <h4 class="font-bold text-sm text-white">${data.presetName}</h4>
-                                <p class="text-[10px] text-blue-400 uppercase font-bold">${data.targetCount} Targets • ${data.events.length} Events</p>
+                                <p class="text-[10px] text-blue-400 font-bold">${data.targetCount} Targets • ${data.events.length} Events</p>
                             </div>
                             <div class="text-right">
                                 <span class="block text-xl font-mono font-bold text-white">${avg.toFixed(2)}s</span>
-                                <span class="text-[9px] uppercase text-slate-500 font-bold">AVG DURATION</span>
+                                <span class="text-[9px] text-slate-500 font-bold">AVG DURATION</span>
                             </div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }).join('');
         }
 
         function handleSubmit() {
             const btn = document.getElementById('submitFinalBtn');
-            btn.innerText = "Uploading Data...";
+            btn.innerText = "Uploading to Google Sheets...";
             btn.disabled = true;
 
-            // --- DATA CONSOLIDATION LOGIC (AVERAGING) ---
             let flatPayload = sessionData.map(stage => {
                 const totalDuration = stage.events.reduce((acc, ev) => acc + ev.duration, 0);
                 const count = stage.events.length;
-                
-                // --- THE KEY CHANGE: CALCULATE AVERAGE ---
                 const avgDuration = count > 0 ? (totalDuration / count) : 0;
 
                 return {
@@ -509,36 +459,26 @@
                     preset: stage.presetName,
                     qty: stage.targetCount,
                     color: stage.color, 
-                    duration: avgDuration.toFixed(3), // Sending AVERAGE to the column
+                    duration: avgDuration.toFixed(3),
                     freq: count
                 };
             });
 
-            if (flatPayload.length === 0) {
-                alert("No events recorded to submit.");
-                btn.innerText = "Submit Research Data";
-                btn.disabled = false;
-                return;
-            }
-
-            // 2. SEND TO GOOGLE SHEET
             fetch(scriptURL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(flatPayload)
             })
-            .then(response => {
+            .then(() => {
                 document.getElementById('resultsBox').classList.add('hidden');
                 document.getElementById('thankYouBox').classList.remove('hidden');
-                document.getElementById('thankYouBox').classList.add('fade-in');
-                
                 const progress = document.getElementById('redirectProgress');
                 setTimeout(() => { progress.style.width = '100%'; }, 100);
                 setTimeout(() => { window.location.reload(); }, 3000);
             })
             .catch(error => {
-                console.error('Error!', error.message);
+                console.error('Submission Error:', error);
                 btn.innerText = "Error (Try Again)";
                 btn.disabled = false;
             });
