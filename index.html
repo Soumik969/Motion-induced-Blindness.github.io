@@ -250,7 +250,7 @@
     <script>
         // --- CONFIGURATION ---
         // Your Verified Script URL
-        const scriptURL = "https://script.google.com/macros/s/AKfycbyURuWfOLdZ9l28zqlUuiXewU5C-kLyZIpCwvJDjTIEPk2GIanwOlRb4Nesc8gswzOb/exec"; 
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwuuUrX4HEh_xwMgeRmPNm-iT607FYaVr0gLI-o33jv7yabIxnjy4DIvmYDgh3-kKI/exec"; 
         
         let participantName = "";
 
@@ -449,48 +449,47 @@
             }
         }
 
-        // --- SUBMIT TO GOOGLE SHEET ---
+       // --- NEW "INDIVIDUAL DATA" SUBMIT FUNCTION ---
         function submitToGoogleSheet(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
             const msg = document.getElementById('submissionMessage');
             
-            // Gather data
-            const freq = events.length;
-            const total = events.reduce((a, b) => a + b, 0);
-            const avg = freq > 0 ? (total / freq) : 0;
-            const variableSet = document.getElementById('variableDisplay').value;
-
-            if (freq === 0) {
+            // Check if there is data
+            if (events.length === 0) {
                 alert("No data recorded yet! Please run the experiment first.");
                 return;
             }
 
-            btn.innerText = "Sending...";
+            btn.innerText = "Sending " + events.length + " Rows...";
             btn.disabled = true;
 
-            const payload = {
+            // Determine Color Name
+            const colorName = targetColor === '#fbbf24' ? 'Yellow' : 'Orange';
+
+            // Create a LIST of data objects (One per event)
+            const payload = events.map(duration => ({
                 name: participantName,
-                variable: variableSet,
-                avg: avg.toFixed(2),
-                events: freq
-            };
+                color: colorName,
+                qty: targetCount,
+                preset: currentSettings.name,
+                duration: duration.toFixed(2) // Send the EXACT time for this specific event
+            }));
 
             fetch(scriptURL, {
                 method: 'POST',
-                mode: 'no-cors', // Important for Google Sheets
+                mode: 'no-cors',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload) // Send the whole list
             })
             .then(response => {
-                msg.innerText = "Data successfully saved to Laboratory Database.";
+                msg.innerText = "Saved " + events.length + " events to database.";
                 msg.classList.remove('hidden');
                 btn.innerText = "Export Success";
                 btn.classList.replace('btn-primary', 'bg-green-600');
                 
-                // Optional: clear data for next round
                 setTimeout(() => {
                    msg.classList.add('hidden');
                    btn.disabled = false;
@@ -512,4 +511,5 @@
     </script>
 </body>
 </html>
+
 
