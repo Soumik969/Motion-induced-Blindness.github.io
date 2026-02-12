@@ -117,7 +117,7 @@
                 </div>
                 <div class="flex gap-4">
                     <span class="text-blue-500 font-bold">03.</span>
-                    <p>There are <strong>8 trials</strong> of 10 seconds each.</p>
+                    <p>There are <strong>8 trials</strong> of 20 seconds each.</p>
                 </div>
             </div>
 
@@ -161,7 +161,7 @@
 
                     <div class="glass-panel p-8 text-center" id="timerCard">
                         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Trial Remaining</label>
-                        <div id="countdown" class="text-6xl font-black font-mono text-blue-500">10.0</div>
+                        <div id="countdown" class="text-6xl font-black font-mono text-blue-500">20.0</div>
                         <div class="mt-4 flex flex-col gap-3">
                             <div class="text-xs text-slate-500 font-bold uppercase animate-pulse" id="statusIndicator">
                                 Recording...
@@ -232,7 +232,7 @@
         const canvasOverlay = document.getElementById('canvasOverlay');
         const intervalDisp = document.getElementById('intervalDisplay');
         
-        const TRIAL_TIME = 10000;
+        const TRIAL_TIME = 20000;
 
         const PRESETS_RAW = [
             { name: "Yellow Standard", maskColor: '#3b82f6', targetColor: '#fbbf24', vibration: false, contrast: 1.0 },
@@ -300,7 +300,7 @@
                 dot.classList.toggle('active', idx === currentStageIdx);
                 dot.classList.toggle('complete', idx < currentStageIdx);
             });
-            countdownDisp.innerText = "10.0";
+            countdownDisp.innerText = "20.0";
             canvasOverlay.style.opacity = '1';
             canvasOverlay.style.pointerEvents = 'all';
         }
