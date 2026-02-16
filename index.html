@@ -109,7 +109,7 @@
             <div class="space-y-4 text-slate-300 mb-8">
                 <div class="flex gap-4">
                     <span class="text-blue-500 font-bold">01.</span>
-                    <p>Focus your gaze strictly on the <strong>green cross</strong> in the center.</p>
+                    <p>Focus your gaze strictly on the <strong>red square</strong> in the center.</p>
                 </div>
                 <div class="flex gap-4">
                     <span class="text-blue-500 font-bold">02.</span>
@@ -235,10 +235,10 @@
         const TRIAL_TIME = 20000;
 
         const PRESETS_RAW = [
-            { name: "Yellow Standard", maskColor: '#3b82f6', targetColor: '#fbbf24', vibration: false, contrast: 1.0 },
-            { name: "Orange Standard", maskColor: '#3b82f6', targetColor: '#f97316', vibration: false, contrast: 1.0 },
-            { name: "Yellow Vibration", maskColor: '#3b82f6', targetColor: '#fbbf24', vibration: true, contrast: 1.0 },
-            { name: "Yellow Low Contrast", maskColor: '#3b82f6', targetColor: '#fbbf24', vibration: false, contrast: 0.25 }
+            { name: "Yellow Standard", maskColor: '#3b82f6', targetColor: '#fbbf24', vibration: false, contrast: 1.0, opacity: 0.9, size: 5 },
+            { name: "Magenta Standard", maskColor: '#3b82f6', targetColor: '#e879f9', vibration: false, contrast: 1.0, opacity: 1.0, size: 5 },
+            { name: "Yellow Vibration", maskColor: '#3b82f6', targetColor: '#fbbf24', vibration: true, contrast: 1.0, opacity: 0.9, size: 5 },
+            { name: "Yellow Large", maskColor: '#3b82f6', targetColor: '#fbbf24', vibration: false, contrast: 1.0, opacity: 1.0, size: 10 }
         ];
 
         const STAGES = [];
@@ -352,7 +352,7 @@
             sessionData.push({
                 presetName: stage.name,
                 targetCount: stage.targetCount,
-                color: stage.targetColor === '#fbbf24' ? 'Yellow' : 'Orange',
+                color: stage.targetColor === '#fbbf24' ? 'Yellow' : 'Magenta',
                 events: [...currentEvents]
             });
             if(currentStageIdx < 7) {
@@ -444,8 +444,9 @@
                 ctx.fill();
             });
             ctx.restore();
-            ctx.globalAlpha = 1.0;
+            ctx.globalAlpha = stage.opacity !== undefined ? stage.opacity : 1.0;
             ctx.fillStyle = stage.targetColor;
+            const targetSize = stage.size || 5;
             const targetAngles = stage.targetCount === 3 ? [30, 150, 270] : [0, 180];
             targetAngles.forEach(deg => {
                 const r = deg * Math.PI / 180;
@@ -455,16 +456,17 @@
                     jY = (Math.random() - 0.5) * 8;
                 }
                 ctx.beginPath();
-                ctx.arc(cx + Math.cos(r) * 140 + jX, cy + Math.sin(r) * 140 + jY, 7, 0, Math.PI * 2);
+                ctx.arc(cx + Math.cos(r) * 170 + jX, cy + Math.sin(r) * 170 + jY, targetSize, 0, Math.PI * 2);
                 ctx.fill();
             });
-            ctx.strokeStyle = '#4ade80';
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(cx-15, cy); ctx.lineTo(cx+15, cy);
-            ctx.moveTo(cx, cy-15); ctx.lineTo(cx, cy+15);
-            ctx.stroke();
-            angle += 0.025;
+            ctx.globalAlpha = 1.0;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(angle * 2);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(-8, -8, 16, 16);
+            ctx.restore();
+            angle += 0.06;
             requestAnimationFrame(draw);
         }
 
