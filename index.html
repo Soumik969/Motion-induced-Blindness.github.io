@@ -352,7 +352,7 @@
             sessionData.push({
                 presetName: stage.name,
                 targetCount: stage.targetCount,
-                color: stage.targetColor === '#fbbf24' ? 'Yellow' : 'Magenta',
+                color: stage.targetColor === '#fbbf24' ? 'Yellow' : stage.targetColor === '#e879f9' ? 'Magenta' : 'Unknown',
                 events: [...currentEvents]
             });
             if(currentStageIdx < 7) {
